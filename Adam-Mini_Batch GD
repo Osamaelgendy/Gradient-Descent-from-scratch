@@ -1,0 +1,76 @@
+def adam_MiniBatch_GD(X,y,alpha,max_epochs,beta1,beta2,eps,n_batches):
+    
+    thetas = np.zeros((4,1))
+    
+    m_current_all = np.zeros((4,1))
+    v_current_all = np.zeros((4,1))
+    
+    v_before_all = np.zeros((4,1))
+    m_before_all = np.zeros((4,1))
+    
+    m = X.shape[0]
+
+    batchsize=m/n_batches
+    epochs=[]
+    loss=[]
+    th0=[]
+    th1=[]
+    th2=[]
+    th3=[]
+    yhatlist=[]
+    oldloss=[]
+    err=0
+    yhatforall=[]
+    lastyhat=[]
+    yforallepochs=[]
+    
+    for i  in range (max_epochs):
+        data = np.column_stack((X,y))
+        np.random.shuffle(data)
+        X = data[:,0:4]
+        y = data[:,4]
+        bx = np.split(X, n_batches)
+        by = np.split(y, n_batches) 
+        oldloss.append(err)
+        yhatforall.clear()
+
+        for j in range(n_batches):
+
+            yhat = bx[j] @ thetas
+            by[j] = by[j].reshape(-1,1)
+            error_vector = (yhat - by[j])
+            #print(error_vector.shape)
+            err = (1/(2 * batchsize)) * error_vector.T @ error_vector
+
+            gradient_all =  (1 / batchsize) * bx[j].T @ error_vector
+
+            m_current_all = beta1 * m_before_all + (1-beta1) * gradient_all
+
+            v_current_all= beta2 * v_before_all + (1-beta2) * (gradient_all)**2
+
+            m_corrected_all = m_current_all / (1-beta1**(i+1))
+            v_corrected_all = v_current_all / (1-beta2**(i+1))
+            
+            
+            thetas = thetas - (alpha * m_corrected_all / (np.sqrt(v_corrected_all)+eps) )
+ 
+
+ 
+            yhatforall.append(yhat)
+            yforallepochs.append(yhat)
+            loss.append(err)
+
+        th0.append(thetas[0,0])
+        th1.append(thetas[1,0])
+        th2.append(thetas[2,0])
+        th3.append(thetas[3,0])
+        epochs.append(i)
+
+        if np.linalg.norm(gradient_all) < .0001 or abs(err-oldloss[-1])<.0001:
+            break
+    lastyhat.append(yhatforall)  
+    lastyhat = np.array(lastyhat[0]).reshape(-1,1)
+    print(thetas)
+    return {'all_th0':th0,'all_th1':th1,'all_th2':th2,'all_th3':th3,'loss':loss,'yhat':yhat,'th0opt':thetas[0,0],
+'th1opt':thetas[1,0],'th2opt':thetas[2,0],'th3opt':thetas[3,0],'iters':epochs,'last_yhat':lastyhat,'yhatall':yforallepochs}
+
